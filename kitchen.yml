@@ -1,0 +1,48 @@
+---
+driver:
+  name: ec2
+  aws_ssh_key_id: test-fr
+  image_id: ami-098f16afa9edf40be
+  security_group_ids: sg-01b33d003b477d7cb
+  region: us-east-1
+  availability_zone: a
+  subnet_id: subnet-0ecc63ca428bea08d
+  instance_type: t2.small
+  tags:
+    Name: <%= ENV['USER'] %>-test-kitchen
+    Comment: Created by Test Kitchen
+  block_device_mappings:
+    - device_name: /dev/sda1
+      ebs:
+        delete_on_termination: true
+
+transport:
+  ssh_key: ~/.ssh/test-fr.pem
+  connection_timeout: 10
+  connection_retries: 5
+  username: centos
+
+platforms:
+  - name: redhat
+    transport:
+      username: ec2-user
+    provisioner:
+      name: ansible_playbook
+      hosts: all
+      roles_path: ./roles
+      playbook: ./playbooks/playbook.yml
+      role_name: httpd
+      require_chef_for_busser: false
+      ansible_host_key_checking: false
+      ansible_verbose: true
+      ansible_verbosity: 2
+
+verifier:
+  name: shell
+  command: >
+    py.test --color=yes
+    --hosts="paramiko://ec2-user@${KITCHEN_HOSTNAME}:22?ssh_identity_file=~/.ssh/test-fr.pem"
+    "./roles/httpd/test/integration/default"
+
+suites:
+  - name: default

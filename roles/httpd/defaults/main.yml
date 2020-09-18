@@ -1,0 +1,6 @@
+---
+# defaults file for httpd
+httpd:
+  docroot: /var/www/html
+  package: httpd
+  service: httpd

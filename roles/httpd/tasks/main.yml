@@ -1,0 +1,17 @@
+---
+# tasks file for httpd
+- name: "Install Web Service"
+  package:
+    name: "{{ httpd.package }}"
+    state: present
+
+- name: "Start Web Service"
+  service:
+    name: "{{ httpd.service }}"
+    state: started
+    enabled: yes
+
+- name: "Copy Content"
+  copy:
+    src: "{{ role_path }}/files/index.html"
+    dest: "{{ httpd.docroot }}/index.html"

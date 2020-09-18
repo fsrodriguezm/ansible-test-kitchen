@@ -1,0 +1,6 @@
+.kitchen/*
+kitchen/*/*
+.kitchen.local.yml
+*.pem
+*.pyc
+.pytest_cache
