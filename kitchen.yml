@@ -2,25 +2,27 @@
 driver:
   name: ec2
   aws_ssh_key_id: test-fr
-  image_id: ami-098f16afa9edf40be
-  security_group_ids: sg-01b33d003b477d7cb
+  image_id: ami-000db10762d0c4c05 #redhat 7
+  security_group_ids: sg-067b13f2d11215967
   region: us-east-1
   availability_zone: a
-  subnet_id: subnet-0ecc63ca428bea08d
-  instance_type: t2.small
+  subnet_id: subnet-02af5d86b2727cc36
+  instance_type: t2.medium
   tags:
     Name: <%= ENV['USER'] %>-test-kitchen
     Comment: Created by Test Kitchen
   block_device_mappings:
     - device_name: /dev/sda1
       ebs:
+        volume_size: 20
         delete_on_termination: true
 
 transport:
   ssh_key: ~/.ssh/test-fr.pem
+  max_ssh_sessions: 6
   connection_timeout: 10
   connection_retries: 5
-  username: centos
+  username: ec2-user
 
 platforms:
   - name: redhat
@@ -31,11 +33,11 @@ platforms:
       hosts: all
       roles_path: ./roles
       playbook: ./playbooks/playbook.yml
-      role_name: httpd
       require_chef_for_busser: false
       ansible_host_key_checking: false
       ansible_verbose: true
-      ansible_verbosity: 2
+      ansible_verbosity: 4
+      ansible_vault_password_file: ~/.secrets/ansible_vault.txt
 
 verifier:
   name: shell

@@ -1,0 +1,66 @@
+---
+- name: set docker url
+  set_fact:
+    docker_url: "{{ vault_docker_url }}"
+
+- name: set docker version
+  set_fact:
+    docker_ee_version: 19.03.12-3
+
+- name: remove previous docker packages
+  yum:
+    name:
+      - docker-common
+      - docker-selinux
+      - docker-engine-selinux
+      - docker-engine
+      - docker-ce
+    state: absent
+
+- name: update the system
+  yum:
+    name: "*"
+    state: latest
+
+- copy:
+    content: "{{ docker_url }}/rhel"
+    dest: /etc/yum/vars/dockerurl
+
+- copy:
+    content: "7"
+    dest: /etc/yum/vars/dockerosversion
+
+- name: install docker required packages
+  yum:
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+
+- name: Enable rhui-REGION-rhel-server-extras repo
+  shell: yum-config-manager --enable rhel-7-server-rhui-extras-rpms
+
+- name: add docker ee repo
+  shell: sudo -E yum-config-manager --add-repo {{ docker_url }}/rhel/docker-ee.repo
+
+- name: install docker engine
+  yum:
+    name:
+      - docker-ee-cli-{{ docker_ee_version }}.el7.x86_64
+      - docker-ee-{{ docker_ee_version }}.el7.x86_64
+    state: present
+
+- name: exclude docker in yum.conf
+  lineinfile:
+    path: /etc/yum.conf
+    create: yes
+    regexp: '^exclude='
+    line: 'exclude=docker*'
+    state: present
+
+- name: start and enable docker
+  service:
+    name: docker
+    enabled: yes
+    state: started

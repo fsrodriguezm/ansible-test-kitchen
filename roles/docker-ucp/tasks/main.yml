@@ -1,0 +1,79 @@
+---
+# - name: install docker required packages
+#   yum:
+#     name: 
+#       - firewalld
+#     state: present
+
+# - name: start and enable firewalld
+#   service:
+#     name: firewalld
+#     enabled: yes
+#     state: started
+
+# - name: open required ports for UCP
+#   shell: |
+#     for i in 179 443 2376 6443 6444 7946 10250 12376 12379 12380 12381 12382 12383 12384 12385 12386; do
+#       firewall-cmd --add-port=$i/tcp --permanent
+#     done
+
+# - name: open required ports for UCP
+#   command: firewall-cmd --permanent --zone=public \
+#             --add-port=179/tcp \
+#             --add-port=443/tcp \
+#             --add-port=2376/tcp \
+#             --add-port=2377/tcp \
+#             --add-port=4789/tcp \
+#             --add-port=4789/udp \
+#             --add-port=7946/tcp \
+#             --add-port=7946/udp \
+#             --add-port=6443/tcp \
+#             --add-port=6444/tcp \
+#             --add-port=12376/tcp \
+#             --add-port=12378/tcp \
+#             --add-port=12379/tcp \
+#             --add-port=12380/tcp \
+#             --add-port=12381/tcp \
+#             --add-port=12382/tcp \
+#             --add-port=12383/tcp \
+#             --add-port=12384/tcp \
+#             --add-port=12385/tcp \
+#             --add-port=12386/tcp \
+#             --add-port=12388/tcp
+
+# - name: reload firewalld configuration
+#   command: firewall-cmd --reload
+
+# - name: restart docker service
+#   service:
+#     name: docker
+#     state: restarted
+
+- debug:
+    var: ansible_default_ipv4.address
+
+- name: install docker ucp
+  shell: docker container run --rm -t --name ucp \
+           -v /var/run/docker.sock:/var/run/docker.sock \
+           mirantis/ucp:3.3.3 install \
+           --host-address {{ ansible_default_ipv4.address }} \
+           --admin-username admin \
+           --admin-password {{ vault_admin_password }} \
+           --force-minimums \
+           -D | tee /tmp/docker_ucp_install.log
+
+# TODO: autoamte license download           
+# -v /etc/docker/docker_subscription.lic:/docker_subscription.lic \
+
+# TODO: generate tokens
+# docker swarm join-token manager
+# docker swarm join-token worker
+
+# - name: get swarm worker token
+#   shell: echo `docker swarm join-token worker` | cut -f2 -d':' | sed 's|\\||g'
+#   register: worker_token
+
+# - name: save worker token
+#   copy:
+#     content: "token{{ ":" }} {{ hostvars[groups['ucp_main'][0]]['worker_token']['stdout'] }}" 
+#     dest: /tmp/worker_token
