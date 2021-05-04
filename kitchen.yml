@@ -26,7 +26,7 @@ platforms:
         - sed -i 's/UsePAM yes/UsePAM no/g' /etc/ssh/sshd_config
         - systemctl enable sshd.service
       forward:
-        - 80:80
+        - 8080:80
       run_command: /usr/sbin/init
 
 verifier:
