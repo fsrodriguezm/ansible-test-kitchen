@@ -1,41 +1,33 @@
 ---
 driver:
-  name: ec2
-  aws_ssh_key_id: test-fr
-  image_id: ami-098f16afa9edf40be
-  security_group_ids: sg-01b33d003b477d7cb
-  region: us-east-1
-  availability_zone: a
-  subnet_id: subnet-0ecc63ca428bea08d
-  instance_type: t2.small
-  tags:
-    Name: <%= ENV['USER'] %>-test-kitchen
-    Comment: Created by Test Kitchen
-  block_device_mappings:
-    - device_name: /dev/sda1
-      ebs:
-        delete_on_termination: true
+  # DOCKER_BUILDKIT=0 kitchen create
+  # https://github.com/test-kitchen/kitchen-docker/issues/337
+  name: docker
 
-transport:
-  ssh_key: ~/.ssh/test-fr.pem
-  connection_timeout: 10
-  connection_retries: 5
-  username: centos
+provisioner:
+  name: ansible_playbook
+  hosts: all
+  roles_path: ./roles
+  playbook: ./playbooks/playbook.yml
+  require_ansible_omnibus: false
+  require_chef_for_busser: false
 
 platforms:
-  - name: redhat
-    transport:
-      username: ec2-user
-    provisioner:
-      name: ansible_playbook
-      hosts: all
-      roles_path: ./roles
-      playbook: ./playbooks/playbook.yml
-      role_name: httpd
-      require_chef_for_busser: false
-      ansible_host_key_checking: false
-      ansible_verbose: true
-      ansible_verbosity: 2
+  - name: centos-7
+    driver_config:
+      platform: centos
+      image: centos/systemd
+      volume:
+        - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      privileged: true
+      provision_command:
+        - yum -y install epel-release
+        - yum -y install ansible
+        - sed -i 's/UsePAM yes/UsePAM no/g' /etc/ssh/sshd_config
+        - systemctl enable sshd.service
+      forward:
+        - 80:80
+      run_command: /usr/sbin/init
 
 verifier:
   name: shell
